@@ -1,0 +1,9 @@
+services:
+  cloudflare-ddns:
+    image: favonia/cloudflare-ddns:latest
+    container_name: cloudflare-ddns
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - IP6_PROVIDER=none

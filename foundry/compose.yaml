@@ -1,0 +1,17 @@
+services:
+  foundry:
+    image: felddy/foundryvtt:release
+    container_name: foundry
+    restart: unless-stopped
+    ports:
+      - "30000:30000"
+    volumes:
+      - /home/xeon/foundry:/data
+    env_file:
+      - .env
+    networks:
+      - foundry_default
+
+networks:
+  foundry_default:
+    external: true
