@@ -6,7 +6,7 @@ services:
     ports:
       - "30000:30000"
     volumes:
-      - /home/xeon/foundry:/data
+      - /docker/foundry/data:/data
     env_file:
       - .env
     networks:

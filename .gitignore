@@ -28,6 +28,7 @@ npm/letsencrypt/
 plex/plex/
 plex/overseer/
 plex/tautulli/
+plex/.env
 
 # =============================================================================
 # Servarr stack
