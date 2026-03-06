@@ -70,25 +70,27 @@ info "Auth file loaded. CLIENT_ID=$CLIENT_ID"
 
 # ── Get access token ──────────────────────────────────────────────────────────
 
-section "Authenticating with Infisical"
-info "Requesting access token from $INFISICAL_API_URL"
-info "Method: universal-auth"
+get_token() {
+  section "Authenticating with Infisical"
+  info "Requesting access token from $INFISICAL_API_URL"
+  info "Method: universal-auth"
 
-INFISICAL_TOKEN=$(INFISICAL_API_URL="$INFISICAL_API_URL" infisical login \
-  --method=universal-auth \
-  --client-id="$CLIENT_ID" \
-  --client-secret="$CLIENT_SECRET" \
-  --silent \
-  --plain)
+  INFISICAL_TOKEN=$(INFISICAL_API_URL="$INFISICAL_API_URL" infisical login \
+    --method=universal-auth \
+    --client-id="$CLIENT_ID" \
+    --client-secret="$CLIENT_SECRET" \
+    --silent \
+    --plain)
 
-if [[ -z "$INFISICAL_TOKEN" ]]; then
-  error "Failed to obtain access token from Infisical"
-  error "Check CLIENT_ID, CLIENT_SECRET, and that Infisical is reachable at $INFISICAL_API_URL"
-  exit 1
-fi
+  if [[ -z "$INFISICAL_TOKEN" ]]; then
+    error "Failed to obtain access token from Infisical"
+    error "Check CLIENT_ID, CLIENT_SECRET, and that Infisical is reachable at $INFISICAL_API_URL"
+    exit 1
+  fi
 
-info "Access token obtained successfully"
-debug "Token length: ${#INFISICAL_TOKEN} chars"
+  info "Access token obtained successfully"
+  debug "Token length: ${#INFISICAL_TOKEN} chars"
+}
 
 # ── Secret remapping ──────────────────────────────────────────────────────────
 # Fetches a secret from Infisical and exports it under a different name
@@ -106,6 +108,7 @@ remap() {
     --domain="$INFISICAL_API_URL" \
     --projectId="$PROJECT_ID" \
     --env="$INFISICAL_ENV" \
+    --silent \
     --plain 2>&1)
 
   local exit_code=$?
@@ -248,7 +251,7 @@ cmd_up() {
   section "Command: up"
   info "Stacks to start: ${STACKS[*]}"
 
-  # Start infisical first and wait for it to be healthy
+  # Start infisical first and wait for it to be healthy before authenticating
   stack_up "infisical"
   info "Waiting for Infisical to be ready..."
   until curl -sf "http://192.168.1.49:8085/api/status" > /dev/null 2>&1; do
@@ -257,6 +260,7 @@ cmd_up() {
   done
   info "Infisical is ready"
 
+  get_token
   inject_secrets
 
   for stack in "${STACKS[@]}"; do
