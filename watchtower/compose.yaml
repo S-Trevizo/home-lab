@@ -6,4 +6,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
       - .env
+    envrionment:
+      - WATCHTOWER_NOTIFICATION_URL
     restart: unless-stopped

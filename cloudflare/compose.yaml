@@ -3,7 +3,8 @@ services:
     image: favonia/cloudflare-ddns:latest
     container_name: cloudflare-ddns
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       - IP6_PROVIDER=none
+      - CLOUDFLARE_API_TOKEN
+      - DOMAINNS=
+      - PROXIED=

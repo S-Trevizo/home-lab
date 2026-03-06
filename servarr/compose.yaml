@@ -8,7 +8,6 @@
 # NOTICE: We recently switched to using a .env file. PLEASE refer to the docs.
 # https://github.com/TechHutTV/homelab/tree/main/media#docker-compose-and-env
 ############################################################################
-version: "2.4"
 networks:
   servarrnetwork:
     name: servarrnetwork
@@ -37,8 +36,12 @@ services:
     volumes:
       - ./gluetun:/gluetun
     # Make a '.env' file in the same directory.
-    env_file:
-      - .env
+    env_file: .env
+    environment:
+      - WIREGUARD_PRIVATE_KEY
+      - WIREGUARD_PRESHARED_KEY
+      - WIREGUARD_ADDRESSES
+      - WIREGUARD_PUBLIC_KEY
     healthcheck:
       test: ping -c 1 www.google.com || exit 1
       interval: 20s

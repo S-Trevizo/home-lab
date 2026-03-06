@@ -9,6 +9,10 @@ services:
       - /docker/foundry/data:/data
     env_file:
       - .env
+    environment:
+      - FOUNDRY_USERNAME
+      - FOUNDRY_PASSWORD
+      - FOUNDRY_ADMIN_KEY
     networks:
       - foundry_default
 

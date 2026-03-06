@@ -1,5 +1,4 @@
 ############################################################################
-version: "2.4"
 networks:
   firefly_iii:
     name: firefly_iii
@@ -20,6 +19,12 @@ services:
     env_file: .env
     depends_on:
       - db
+    environment:
+      - APP_KEY
+      - DB_USERNAME
+      - DB_PASSWORD
+      - SITE_OWNER
+      - STATIC_CRON_TOKEN
 
   db:
     image: mariadb:lts
@@ -31,12 +36,17 @@ services:
     volumes:
       - ./db:/var/lib/mysql
     env_file: .db.env
+    environment:
+      - MYSQL_USER
+      - MYSQL_PASSWORD
 
   cron:
     image: alpine
     container_name: firefly_iii_cron
     restart: unless-stopped
     env_file: .env
+    environment:
+      - STATIC_CRON_TOKEN
     command: sh -c "
       apk add tzdata && \
       (ln -s /usr/share/zoneinfo/$$TZ /etc/localtime || true) && \
