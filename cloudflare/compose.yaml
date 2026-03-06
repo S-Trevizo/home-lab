@@ -6,5 +6,5 @@ services:
     environment:
       - IP6_PROVIDER=none
       - CLOUDFLARE_API_TOKEN
-      - DOMAINNS=
-      - PROXIED=
+      - DOMAINS
+      - PROXIED

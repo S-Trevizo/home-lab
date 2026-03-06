@@ -154,7 +154,7 @@ inject_secrets() {
   # Firefly (db — MYSQL_PASSWORD must match DB_PASSWORD)
   info "Remapping Firefly DB secrets"
   remap FIREFLY_DB_PASSWORD   MYSQL_PASSWORD
-  remap FIREFLY_DB_USERNAME   MYSQL_USERNAME
+  remap FIREFLY_DB_USERNAME   MYSQL_USER
 
   # Foundry
   info "Remapping Foundry secrets"
