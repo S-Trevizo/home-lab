@@ -247,10 +247,25 @@ stack_pull() {
 cmd_up() {
   section "Command: up"
   info "Stacks to start: ${STACKS[*]}"
+
+  # Start infisical first and wait for it to be healthy
+  stack_up "infisical"
+  info "Waiting for Infisical to be ready..."
+  until curl -sf "http://192.168.1.49:8085/api/status" > /dev/null 2>&1; do
+    debug "Infisical not ready yet, retrying in 5 seconds..."
+    sleep 5
+  done
+  info "Infisical is ready"
+
   inject_secrets
+
   for stack in "${STACKS[@]}"; do
+    if [[ "$stack" == "infisical" ]]; then
+      continue  # already started above
+    fi
     stack_up "$stack"
   done
+
   section "Done"
   info "All stacks started"
 }
