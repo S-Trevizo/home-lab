@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  - job_name: cadvisor
+    static_configs:
+      - targets:
+          - cadvisor:8080
+
+  - job_name: node_exporter_servarr
+    static_configs:
+      - targets:
+          - node_exporter:9100
+        labels:
+          host: servarr
+
+  - job_name: node_exporter_proxmox
+    static_configs:
+      - targets:
+          - 192.168.1.228:9100
+        labels:
+          host: proxmox
+
+  - job_name: nginx
+    static_configs:
+      - targets:
+          - nginx_exporter:9113
