@@ -130,63 +130,75 @@ remap() {
   info "Exported $target_var (from $infisical_key)"
 }
 
+inject_secrets_for() {
+  local stack="$1"
+  case "$stack" in
+    cloudflare)
+      remap CLOUDFLARE_API_TOKEN  CLOUDFLARE_API_TOKEN
+      remap CLOUDFLARE_DOMAINS    DOMAINS
+      remap CLOUDFLARE_PROXIED    PROXIED
+      ;;
+    servarr)
+      remap WIREGUARD_PUBLIC_KEY      WIREGUARD_PUBLIC_KEY
+      remap WIREGUARD_PRIVATE_KEY     WIREGUARD_PRIVATE_KEY
+      remap WIREGUARD_PRESHARED_KEY   WIREGUARD_PRESHARED_KEY
+      remap WIREGUARD_ADDRESSES       WIREGUARD_ADDRESSES
+      ;;
+    firefly)
+      remap FIREFLY_APP_KEY       APP_KEY
+      remap FIREFLY_DB_USERNAME   DB_USERNAME
+      remap FIREFLY_DB_PASSWORD   DB_PASSWORD
+      remap FIREFLY_SITEOWNER     SITE_OWNER
+      remap FIREFLY_CRON_TOKEN    STATIC_CRON_TOKEN
+      remap FIREFLY_DB_PASSWORD   MYSQL_PASSWORD
+      remap FIREFLY_DB_USERNAME   MYSQL_USER
+      ;;
+    immich)
+      remap IMMICH_DB_USER        IMMICH_DB_USER
+      remap IMMICH_DB_PASSWORD    IMMICH_DB_PASSWORD
+      ;;
+    nextcloud)
+      remap NEXTCLOUD_DB_USER          NEXTCLOUD_DB_USER
+      remap NEXTCLOUD_DB_PASSWORD      NEXTCLOUD_DB_PASSWORD
+      remap NEXTCLOUD_DB_ROOT_PASSWORD NEXTCLOUD_DB_ROOT_PASSWORD
+      remap NEXTCLOUD_ADMIN_USER       NEXTCLOUD_ADMIN_USER
+      remap NEXTCLOUD_ADMIN_PASSWORD   NEXTCLOUD_ADMIN_PASSWORD
+      ;;
+    foundry)
+      remap FOUNDRY_USERNAME   FOUNDRY_USERNAME
+      remap FOUNDRY_PASSWORD   FOUNDRY_PASSWORD
+      remap FOUNDRY_ADMIN_KEY  FOUNDRY_ADMIN_KEY
+      ;;
+    observability)
+      remap GRAFANA_ADMIN_PASSWORD  GRAFANA_ADMIN_PASSWORD
+      ;;
+    watchtower)
+      remap WATCHTOWER_NOTIFICATION_URL  WATCHTOWER_NOTIFICATION_URL
+      ;;
+    npm|plex|infisical)
+      ;;  # no secrets needed
+  esac
+}
+
 inject_secrets() {
+  local -a targets=("$@")
   section "Injecting secrets"
   info "Project ID: $PROJECT_ID"
   info "Environment: $INFISICAL_ENV"
 
-  # Cloudflare DDNS
-  info "Remapping Cloudflare secrets"
-  remap CLOUDFLARE_API_TOKEN  CLOUDFLARE_API_TOKEN
-  remap CLOUDFLARE_DOMAINS    DOMAINS
-  remap CLOUDFLARE_PROXIED    PROXIED
-
-  # Servarr / gluetun (WireGuard)
-  info "Remapping WireGuard secrets"
-  remap WIREGUARD_PUBLIC_KEY      WIREGUARD_PUBLIC_KEY
-  remap WIREGUARD_PRIVATE_KEY     WIREGUARD_PRIVATE_KEY
-  remap WIREGUARD_PRESHARED_KEY   WIREGUARD_PRESHARED_KEY
-  remap WIREGUARD_ADDRESSES       WIREGUARD_ADDRESSES
-
-  # Firefly (app)
-  info "Remapping Firefly app secrets"
-  remap FIREFLY_APP_KEY       APP_KEY
-  remap FIREFLY_DB_USERNAME   DB_USERNAME
-  remap FIREFLY_DB_PASSWORD   DB_PASSWORD
-  remap FIREFLY_SITEOWNER     SITE_OWNER
-  remap FIREFLY_CRON_TOKEN    STATIC_CRON_TOKEN
-
-  # Firefly (db — MYSQL_PASSWORD must match DB_PASSWORD)
-  info "Remapping Firefly DB secrets"
-  remap FIREFLY_DB_PASSWORD   MYSQL_PASSWORD
-  remap FIREFLY_DB_USERNAME   MYSQL_USER
-
-  # Immich
-  info "Remapping Immich DB secrets"
-  remap IMMICH_DB_USER        IMMICH_DB_USER
-  remap IMMICH_DB_PASSWORD    IMMICH_DB_PASSWORD
-
-  # Nextcloud
-  info "Remapping Nextcloud secrets"
-  remap NEXTCLOUD_DB_USER          NEXTCLOUD_DB_USER
-  remap NEXTCLOUD_DB_PASSWORD      NEXTCLOUD_DB_PASSWORD
-  remap NEXTCLOUD_DB_ROOT_PASSWORD NEXTCLOUD_DB_ROOT_PASSWORD
-  remap NEXTCLOUD_ADMIN_USER       NEXTCLOUD_ADMIN_USER
-  remap NEXTCLOUD_ADMIN_PASSWORD   NEXTCLOUD_ADMIN_PASSWORD
-
-  # Foundry
-  info "Remapping Foundry secrets"
-  remap FOUNDRY_USERNAME   FOUNDRY_USERNAME
-  remap FOUNDRY_PASSWORD   FOUNDRY_PASSWORD
-  remap FOUNDRY_ADMIN_KEY  FOUNDRY_ADMIN_KEY
-
-  # Grafana
-  info "Remapping Grafana secrets"
-  remap GRAFANA_ADMIN_PASSWORD  GRAFANA_ADMIN_PASSWORD
-
-  # Watchtower
-  info "Remapping Watchtower secrets"
-  remap WATCHTOWER_NOTIFICATION_URL  WATCHTOWER_NOTIFICATION_URL
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    # Inject all secrets
+    for stack in "${STACKS[@]}"; do
+      info "Injecting secrets for: $stack"
+      inject_secrets_for "$stack"
+    done
+  else
+    # Inject only secrets for requested stacks
+    for stack in "${targets[@]}"; do
+      info "Injecting secrets for: $stack"
+      inject_secrets_for "$stack"
+    done
+  fi
 
   info "Secret injection complete"
 }
@@ -306,18 +318,19 @@ cmd_up() {
     info "Infisical is ready"
 
     get_token
-    inject_secrets
+    inject_secrets  # injects all secrets
 
     for stack in "${STACKS[@]}"; do
       [[ "$stack" == "infisical" ]] && continue
       stack_up "$stack"
     done
+
   else
     # Selective startup — named stacks only
     validate_stacks "${targets[@]}"
     section "Command: up (selective: ${targets[*]})"
 
-    # If infisical is not already running, ensure secrets are available
+    # If infisical is not already running, start it first
     if ! docker compose -f "$DOCKER_DIR/infisical/compose.yaml" ps --quiet 2>/dev/null | grep -q .; then
       warn "Infisical does not appear to be running — starting it first"
       stack_up "infisical"
@@ -329,9 +342,9 @@ cmd_up() {
     fi
 
     get_token
-    inject_secrets
+    inject_secrets "${targets[@]}"  # injects only secrets for requested stacks
 
-    # Start requested stacks in the canonical order defined in STACKS
+    # Start requested stacks in canonical order
     for stack in "${STACKS[@]}"; do
       in_list "$stack" "${targets[@]}" && stack_up "$stack"
     done
