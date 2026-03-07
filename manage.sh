@@ -163,15 +163,15 @@ inject_secrets() {
 
   # Immich
   info "Remapping Immich DB secrets"
-  remap IMMICH_DB_USER   IMMICH_DB_USER
-  remap IMMICH_DB_PASSWORD   IMMICH_DB_PASSWORD
+  remap IMMICH_DB_USER        IMMICH_DB_USER
+  remap IMMICH_DB_PASSWORD    IMMICH_DB_PASSWORD
 
-  # NextCloud
-  info "Remapping Nextcloud Secrets"
-  remap NEXTCLOUD_DB_USER   NEXTCLOUD_DB_USER
-  remap NEXTCLOUD_DB_PASSWORD   NEXTCLOUD_DB_PASSWORD
-  remap NEXTCLOUD_DB_ROOT_PASSWORD   NEXTCLOUD_DB_ROOT_PASSWORD
-  remap NEXTCLOUD_ADMIN_USER   NEXTCLOUD_ADMIN_USER
+  # Nextcloud
+  info "Remapping Nextcloud secrets"
+  remap NEXTCLOUD_DB_USER          NEXTCLOUD_DB_USER
+  remap NEXTCLOUD_DB_PASSWORD      NEXTCLOUD_DB_PASSWORD
+  remap NEXTCLOUD_DB_ROOT_PASSWORD NEXTCLOUD_DB_ROOT_PASSWORD
+  remap NEXTCLOUD_ADMIN_USER       NEXTCLOUD_ADMIN_USER
   remap NEXTCLOUD_ADMIN_PASSWORD   NEXTCLOUD_ADMIN_PASSWORD
 
   # Foundry
@@ -260,75 +260,167 @@ stack_pull() {
   info "Images pulled for $stack"
 }
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+# Validate that all provided stack names exist in STACKS
+validate_stacks() {
+  local -a requested=("$@")
+  for name in "${requested[@]}"; do
+    local valid=0
+    for s in "${STACKS[@]}"; do
+      [[ "$s" == "$name" ]] && valid=1 && break
+    done
+    if [[ $valid -eq 0 ]]; then
+      error "Unknown stack: '$name'. Valid stacks: ${STACKS[*]}"
+      exit 1
+    fi
+  done
+}
+
+# Returns 1 if a stack name is in a provided list, 0 otherwise
+in_list() {
+  local needle="$1"
+  shift
+  for item in "$@"; do
+    [[ "$item" == "$needle" ]] && return 0
+  done
+  return 1
+}
+
 # ── Commands ──────────────────────────────────────────────────────────────────
 
 cmd_up() {
-  section "Command: up"
-  info "Stacks to start: ${STACKS[*]}"
+  local -a targets=("$@")
 
-  # Start infisical first and wait for it to be healthy before authenticating
-  stack_up "infisical"
-  info "Waiting for Infisical to be ready..."
-  until curl -sf "http://192.168.1.49:8085/api/status" > /dev/null 2>&1; do
-    debug "Infisical not ready yet, retrying in 5 seconds..."
-    sleep 5
-  done
-  info "Infisical is ready"
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    # Full startup — all stacks in order
+    section "Command: up (all stacks)"
+    info "Stacks to start: ${STACKS[*]}"
 
-  get_token
-  inject_secrets
+    stack_up "infisical"
+    info "Waiting for Infisical to be ready..."
+    until curl -sf "http://192.168.1.49:8085/api/status" > /dev/null 2>&1; do
+      debug "Infisical not ready yet, retrying in 5 seconds..."
+      sleep 5
+    done
+    info "Infisical is ready"
 
-  for stack in "${STACKS[@]}"; do
-    if [[ "$stack" == "infisical" ]]; then
-      continue  # already started above
+    get_token
+    inject_secrets
+
+    for stack in "${STACKS[@]}"; do
+      [[ "$stack" == "infisical" ]] && continue
+      stack_up "$stack"
+    done
+  else
+    # Selective startup — named stacks only
+    validate_stacks "${targets[@]}"
+    section "Command: up (selective: ${targets[*]})"
+
+    # If infisical is not already running, ensure secrets are available
+    if ! docker compose -f "$DOCKER_DIR/infisical/compose.yaml" ps --quiet 2>/dev/null | grep -q .; then
+      warn "Infisical does not appear to be running — starting it first"
+      stack_up "infisical"
+      info "Waiting for Infisical to be ready..."
+      until curl -sf "http://192.168.1.49:8085/api/status" > /dev/null 2>&1; do
+        debug "Infisical not ready yet, retrying in 5 seconds..."
+        sleep 5
+      done
     fi
-    stack_up "$stack"
-  done
+
+    get_token
+    inject_secrets
+
+    # Start requested stacks in the canonical order defined in STACKS
+    for stack in "${STACKS[@]}"; do
+      in_list "$stack" "${targets[@]}" && stack_up "$stack"
+    done
+  fi
 
   section "Done"
-  info "All stacks started"
+  info "Stacks up: ${targets[*]:-all}"
 }
 
 cmd_down() {
-  section "Command: down"
-  info "Stacks to stop (reverse order): ${STACKS[*]}"
-  for (( i=${#STACKS[@]}-1; i>=0; i-- )); do
-    stack_down "${STACKS[$i]}"
-  done
+  local -a targets=("$@")
+
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    # Full shutdown — all stacks in reverse order
+    section "Command: down (all stacks)"
+    info "Stacks to stop (reverse order): ${STACKS[*]}"
+    for (( i=${#STACKS[@]}-1; i>=0; i-- )); do
+      stack_down "${STACKS[$i]}"
+    done
+  else
+    # Selective shutdown — named stacks only, reverse canonical order
+    validate_stacks "${targets[@]}"
+    section "Command: down (selective: ${targets[*]})"
+    for (( i=${#STACKS[@]}-1; i>=0; i-- )); do
+      in_list "${STACKS[$i]}" "${targets[@]}" && stack_down "${STACKS[$i]}"
+    done
+  fi
+
   section "Done"
-  info "All stacks stopped"
+  info "Stacks down: ${targets[*]:-all}"
 }
 
 cmd_restart() {
-  section "Command: restart"
-  cmd_down
-  cmd_up
+  local -a targets=("$@")
+
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    section "Command: restart (all stacks)"
+    cmd_down
+    cmd_up
+  else
+    validate_stacks "${targets[@]}"
+    section "Command: restart (selective: ${targets[*]})"
+    cmd_down "${targets[@]}"
+    cmd_up "${targets[@]}"
+  fi
 }
 
 cmd_pull() {
-  section "Command: pull"
-  info "Pulling images for all stacks"
-  for stack in "${STACKS[@]}"; do
-    stack_pull "$stack"
-  done
+  local -a targets=("$@")
+
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    section "Command: pull (all stacks)"
+    for stack in "${STACKS[@]}"; do
+      stack_pull "$stack"
+    done
+  else
+    validate_stacks "${targets[@]}"
+    section "Command: pull (selective: ${targets[*]})"
+    for stack in "${STACKS[@]}"; do
+      in_list "$stack" "${targets[@]}" && stack_pull "$stack"
+    done
+  fi
+
   section "Done"
-  info "All images pulled"
+  info "Images pulled: ${targets[*]:-all}"
 }
 
 # ── Entrypoint ────────────────────────────────────────────────────────────────
 
-info "manage.sh started — command: ${1:-<none>}"
+COMMAND="${1:-}"
+shift || true  # shift off the command, remaining args are stack names
+
+info "manage.sh started — command: ${COMMAND:-<none>}"
 info "Running as user: $(whoami)"
 info "Docker dir: $DOCKER_DIR"
 
-case "$1" in
-  up)      cmd_up ;;
-  down)    cmd_down ;;
-  restart) cmd_restart ;;
-  pull)    cmd_pull ;;
+case "$COMMAND" in
+  up)      cmd_up      "$@" ;;
+  down)    cmd_down    "$@" ;;
+  restart) cmd_restart "$@" ;;
+  pull)    cmd_pull    "$@" ;;
   *)
-    error "Unknown command: '${1:-}'"
-    echo "Usage: $0 {up|down|restart|pull}"
+    error "Unknown command: '${COMMAND:-}'"
+    echo "Usage: $0 {up|down|restart|pull} [stack1 stack2 ...]"
+    echo "Examples:"
+    echo "  $0 up                        # start all stacks"
+    echo "  $0 restart immich nextcloud  # restart only immich and nextcloud"
+    echo "  $0 down servarr              # stop only servarr"
+    echo "  $0 pull plex servarr         # pull images for plex and servarr"
     exit 1
     ;;
 esac
