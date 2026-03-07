@@ -1,0 +1,58 @@
+services:
+  immich_server:
+    user: "1000:1000"
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    container_name: immich_server
+    restart: unless-stopped
+    ports:
+      - "2283:2283"
+    volumes:
+      - /home/xeon/data:/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - DB_HOSTNAME=immich_db
+      - DB_DATABASE_NAME=immich
+      - DB_USERNAME=${IMMICH_DB_USER}
+      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
+      - REDIS_HOSTNAME=immich_redis
+    depends_on:
+      - immich_db
+      - immich_redis
+    networks:
+      - immich_net
+
+  immich_machine_learning:
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    container_name: immich_machine_learning
+    restart: unless-stopped
+    volumes:
+      - immich_model_cache:/cache
+    networks:
+      - immich_net
+
+  immich_db:
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+    container_name: immich_db
+    restart: unless-stopped
+    volumes:
+      - ./data/immich_db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=immich
+      - POSTGRES_USER=${IMMICH_DB_USER}
+      - POSTGRES_PASSWORD=${IMMICH_DB_PASSWORD}
+    networks:
+      - immich_net
+
+  immich_redis:
+    image: docker.io/valkey/valkey:9
+    container_name: immich_redis
+    restart: unless-stopped
+    networks:
+      - immich_net
+
+volumes:
+  immich_model_cache:
+
+networks:
+  immich_net:
+    driver: bridge

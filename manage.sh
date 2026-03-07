@@ -20,6 +20,8 @@ STACKS=(
   servarr
   plex
   firefly
+  immich
+  nextcloud
   foundry
   observability
   watchtower
@@ -158,6 +160,19 @@ inject_secrets() {
   info "Remapping Firefly DB secrets"
   remap FIREFLY_DB_PASSWORD   MYSQL_PASSWORD
   remap FIREFLY_DB_USERNAME   MYSQL_USER
+
+  # Immich
+  info "Remapping Immich DB secrets"
+  remap IMMICH_DB_USER   IMMICH_DB_USER
+  remap IMMICH_DB_PASSWORD   IMMICH_DB_PASSWORD
+
+  # NextCloud
+  info "Remapping Nextcloud Secrets"
+  remap NEXTCLOUD_DB_USER   NEXTCLOUD_DB_USER
+  remap NEXTCLOUD_DB_PASSWORD   NEXTCLOUD_DB_PASSWORD
+  remap NEXTCLOUD_DB_ROOT_PASSWORD   NEXTCLOUD_DB_ROOT_PASSWORD
+  remap NEXTCLOUD_ADMIN_USER   NEXTCLOUD_ADMIN_USER
+  remap NEXTCLOUD_ADMIN_PASSWORD   NEXTCLOUD_ADMIN_PASSWORD
 
   # Foundry
   info "Remapping Foundry secrets"
