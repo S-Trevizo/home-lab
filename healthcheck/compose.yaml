@@ -5,7 +5,6 @@ services:
       dockerfile: Dockerfile
     container_name: healthcheck-api
     restart: unless-stopped
-    env_file: .env
     ports:
       - "4000:4000"
     environment:
