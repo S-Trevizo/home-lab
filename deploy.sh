@@ -30,5 +30,5 @@ for folder in $CHANGED; do
   fi
 
   echo "Restarting $folder..."
-  sudo /docker/manage.sh restart "$folder"
+  sudo -u xeon /docker/manage.sh restart "$folder"
 done
