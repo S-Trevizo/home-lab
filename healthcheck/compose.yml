@@ -1,0 +1,17 @@
+services:
+  healthcheck-api:
+    build:
+      context: /home/xeon/repos/home-lab-health-microservice
+      dockerfile: Dockerfile
+    container_name: healthcheck-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+    networks:
+      - healthcheck_default
+
+networks:
+  healthcheck_default:
+    driver: bridge
