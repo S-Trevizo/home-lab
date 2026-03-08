@@ -230,7 +230,7 @@ stack_up() {
   fi
 
   debug "Running: docker compose up -d in $stack_dir"
-  (cd "$stack_dir" && docker compose up -d 2>&1 | while IFS= read -r line; do
+  (cd "$stack_dir" && env docker compose up -d 2>&1 | while IFS= read -r line; do
     debug "[$stack] $line"
   done)
 
