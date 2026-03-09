@@ -1,0 +1,692 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Container Alerts
+    folder: Home Lab
+    interval: 1m
+    rules:
+
+      - uid: container-down-servarr
+        title: "Container Down: servarr stack"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "A servarr container is down"
+          description: "One or more servarr containers (sonarr/radarr/prowlarr/lidarr/bazarr/qbittorrent/nzbget/gluetun/seerr/tautulli) have been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=~\"sonarr|radarr|prowlarr|lidarr|bazarr|qbittorrent|nzbget|gluetun|seerr|tautulli\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-plex
+        title: "Container Down: plex"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container plex is down"
+          description: "Container plex has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"plex\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-immich
+        title: "Container Down: immich_server"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container immich_server is down"
+          description: "Container immich_server has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"immich_server\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-nextcloud
+        title: "Container Down: nextcloud"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "A nextcloud container is down"
+          description: "Container nextcloud or nextcloud_db has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=~\"nextcloud|nextcloud_db\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-firefly
+        title: "Container Down: firefly"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "A Firefly container is down"
+          description: "Container firefly_iii_core or firefly_iii_db has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=~\"firefly_iii_core|firefly_iii_db\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-infisical
+        title: "Container Down: infisical"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Infisical is down"
+          description: "Container infisical-infisical-1 has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"infisical-infisical-1\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-observability
+        title: "Container Down: observability stack"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "An observability container is down"
+          description: "Container loki, prometheus, or grafana has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=~\"loki|prometheus|grafana|healthcheck-api\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-npm
+        title: "Container Down: nginx_proxy_manager"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container nginx_proxy_manager is down"
+          description: "Container nginx_proxy_manager has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"nginx_proxy_manager\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-foundry
+        title: "Container Down: foundry"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container foundry is down"
+          description: "Container foundry has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"foundry\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-cloudflare-ddns
+        title: "Container Down: cloudflare-ddns"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container cloudflare-ddns is down"
+          description: "Container cloudflare-ddns has been absent for more than 10 minutes. Your public IP may stop updating."
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"cloudflare-ddns\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-watchtower
+        title: "Container Down: watchtower"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container watchtower is down"
+          description: "Container watchtower has been absent for more than 10 minutes."
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"watchtower\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-crash-loop
+        title: "Container Crash Loop"
+        condition: B
+        for: 5m
+        annotations:
+          summary: "Container {{ $labels.name }} is crash looping"
+          description: "Container {{ $labels.name }} has restarted more than 5 times in the last 5 minutes."
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "increase(container_start_time_seconds{name=~\"sonarr|radarr|prowlarr|lidarr|bazarr|plex|tautulli|qbittorrent|nzbget|gluetun|seerr|firefly_iii_core|firefly_iii_db|nextcloud|nextcloud_db|immich_server|loki|prometheus|grafana|healthcheck-api|nginx_proxy_manager|infisical-infisical-1\"}[5m])"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 5
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+  - orgId: 1
+    name: Servarr Host Alerts
+    folder: Home Lab
+    interval: 1m
+    rules:
+
+      - uid: servarr-disk-high
+        title: "Servarr Disk Usage High"
+        condition: B
+        for: 5m
+        annotations:
+          summary: "Disk usage on {{ $labels.mountpoint }} is above 85%"
+          description: "Disk at {{ $labels.mountpoint }} on servarr is above 85% full."
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "(1 - node_filesystem_avail_bytes{job=\"node_exporter_servarr\", fstype!~\"tmpfs|overlay\", mountpoint!~\"/boot.*\"} / node_filesystem_size_bytes{job=\"node_exporter_servarr\", fstype!~\"tmpfs|overlay\", mountpoint!~\"/boot.*\"}) * 100"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 85
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: servarr-ram-high
+        title: "Servarr RAM Usage High"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Servarr RAM usage is above 90%"
+          description: "Servarr RAM usage has been above 90% for 10 minutes."
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "(1 - node_memory_MemAvailable_bytes{job=\"node_exporter_servarr\"} / node_memory_MemTotal_bytes{job=\"node_exporter_servarr\"}) * 100"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 90
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: servarr-cpu-high
+        title: "Servarr CPU Sustained High"
+        condition: B
+        for: 5m
+        annotations:
+          summary: "Servarr CPU usage is sustained above 80%"
+          description: "Servarr CPU has been above 80% for 5 minutes."
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "100 - (avg by (instance) (rate(node_cpu_seconds_total{job=\"node_exporter_servarr\", mode=\"idle\"}[2m])) * 100)"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 80
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+  - orgId: 1
+    name: Proxmox Host Alerts
+    folder: Home Lab
+    interval: 1m
+    rules:
+
+      - uid: proxmox-ram-high
+        title: "Proxmox Host RAM High"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Proxmox host RAM usage is above 90%"
+          description: "Proxmox host RAM has been above 90% for 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "(1 - node_memory_MemAvailable_bytes{job=\"node_exporter_proxmox\"} / node_memory_MemTotal_bytes{job=\"node_exporter_proxmox\"}) * 100"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 90
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: proxmox-disk-high
+        title: "Proxmox Host Disk Usage High"
+        condition: B
+        for: 5m
+        annotations:
+          summary: "Disk usage on Proxmox {{ $labels.mountpoint }} is above 85%"
+          description: "Disk at {{ $labels.mountpoint }} on Proxmox host is above 85% full."
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "(1 - node_filesystem_avail_bytes{job=\"node_exporter_proxmox\", fstype!~\"tmpfs|overlay|zfs\", mountpoint!~\"/boot.*\"} / node_filesystem_size_bytes{job=\"node_exporter_proxmox\", fstype!~\"tmpfs|overlay|zfs\", mountpoint!~\"/boot.*\"}) * 100"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 85
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+  - orgId: 1
+    name: Prometheus Scrape Alerts
+    folder: Home Lab
+    interval: 1m
+    rules:
+
+      - uid: scrape-target-down
+        title: "Prometheus Scrape Target Down"
+        condition: B
+        for: 3m
+        annotations:
+          summary: "A Prometheus scrape target is down"
+          description: "Prometheus cannot reach one or more scrape targets for more than 3 minutes. Check Prometheus targets at http://192.168.1.49:9090/targets"
+        labels:
+          severity: warning
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "up == 0"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last

@@ -63,6 +63,15 @@ services:
       - 8081:8080
     networks:
       - observability
+      - servarrnetwork
+      - firefly_iii
+      - nextcloud_nextcloud_net
+      - plex_default
+      - healthcheck_healthcheck_default
+      - infisical_infisical_internal
+      - foundry_default
+      - cloudflare_default
+      - watchtower_default
 
   node_exporter:
     image: prom/node-exporter:v1.7.0
@@ -105,6 +114,7 @@ services:
     env_file: .env
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_USERS_ALLOW_ORG_CREATE=false
       - GF_AUTH_ANONYMOUS_ENABLED=false
@@ -118,8 +128,25 @@ services:
 
 networks:
   observability:
-    name: observability
-
+    driver: bridge
+  servarrnetwork:
+    external: true
+  firefly_iii:
+    external: true
+  nextcloud_nextcloud_net:
+    external: true
+  plex_default:
+    external: true
+  healthcheck_healthcheck_default:
+    external: true
+  infisical_infisical_internal:
+    external: true
+  foundry_default:
+    external: true
+  cloudflare_default:
+    external: true
+  watchtower_default:
+    external: true
 volumes:
   prometheus_data:
   loki_data:
