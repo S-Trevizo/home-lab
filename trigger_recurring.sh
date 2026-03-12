@@ -44,6 +44,10 @@ else
     TARGET_MONTH=$(date +%Y-%m)
 fi
 
+# Compute start/end dates for the month
+MONTH_START="${TARGET_MONTH}-01"
+MONTH_END=$(date -d "${TARGET_MONTH}-01 +1 month -1 day" +%Y-%m-%d)
+
 # ── Infisical auth ────────────────────────────────────────────────────────────
 if [[ ! -f "$AUTH_FILE" ]]; then
     echo "ERROR: Auth file not found at $AUTH_FILE"
@@ -84,7 +88,7 @@ if [[ -z "$API_KEY" ]]; then
     exit 1
 fi
 
-# ── Helper: Firefly API call ──────────────────────────────────────────────────
+# ── Helper: Firefly API calls ─────────────────────────────────────────────────
 firefly_get() {
     curl -sf \
         -H "Authorization: Bearer $API_KEY" \
@@ -111,12 +115,27 @@ if [[ -z "$RECURRENCES" ]]; then
     exit 1
 fi
 
+# ── Fetch existing transactions for the month (for duplicate detection) ───────
+echo "  Fetching existing transactions for $TARGET_MONTH..."
+EXISTING=$(firefly_get "/api/v1/transactions?start=${MONTH_START}&end=${MONTH_END}&limit=500&page=1")
+
+if [[ -z "$EXISTING" ]]; then
+    echo "ERROR: Failed to fetch existing transactions from Firefly"
+    exit 1
+fi
+
+# Build a lookup of "date|description|amount" for existing transactions
+EXISTING_KEYS=$(echo "$EXISTING" | jq -r '
+    .data[].attributes.transactions[] |
+    "\(.date | split("T")[0])|\(.description)|\(.amount | tonumber | . * 100 | round | . / 100)"
+' 2>/dev/null || true)
+
 TOTAL=$(echo "$RECURRENCES" | jq -r '.meta.pagination.total')
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Firefly III Recurring Transaction Trigger"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Target month  : $TARGET_MONTH"
+echo "  Target month  : $TARGET_MONTH ($MONTH_START → $MONTH_END)"
 echo "  Recurrences   : $TOTAL"
 echo "  Firefly URL   : $FIREFLY_URL"
 [[ "$DRY_RUN" == true ]] && echo "  Mode          : DRY RUN (no transactions will be created)"
@@ -124,8 +143,13 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 CREATED_COUNT=0
-SKIPPED_COUNT=0
+DUPLICATE_COUNT=0
 FAILED_COUNT=0
+
+# Arrays to collect skip summaries
+declare -a SKIPPED_INACTIVE=()
+declare -a SKIPPED_NO_OCCURRENCE=()
+declare -a SKIPPED_DUPLICATE=()
 
 # ── Process each recurrence ───────────────────────────────────────────────────
 while IFS= read -r recurrence; do
@@ -134,8 +158,7 @@ while IFS= read -r recurrence; do
     ACTIVE=$(echo "$recurrence" | jq -r '.attributes.active')
 
     if [[ "$ACTIVE" != "true" ]]; then
-        echo "  [SKIP] $TITLE — inactive"
-        ((SKIPPED_COUNT++)) || true
+        SKIPPED_INACTIVE+=("$TITLE")
         continue
     fi
 
@@ -157,14 +180,21 @@ while IFS= read -r recurrence; do
         2>/dev/null || true)
 
     if [[ -z "$OCCURRENCES" ]]; then
-        echo "  [SKIP] $TITLE — no occurrences in $TARGET_MONTH"
-        ((SKIPPED_COUNT++)) || true
+        SKIPPED_NO_OCCURRENCE+=("$TITLE")
         continue
     fi
 
     while IFS= read -r occurrence_dt; do
-        # Extract just the date portion (YYYY-MM-DD)
         DATE=$(echo "$occurrence_dt" | cut -dT -f1)
+
+        # Duplicate check: date|description|amount
+        LOOKUP_KEY="${DATE}|${DESCRIPTION}|${AMOUNT}"
+        if echo "$EXISTING_KEYS" | grep -qF "$LOOKUP_KEY"; then
+            echo "  [$DATE] $TITLE ($TYPE, \$$AMOUNT) ... ⟳ duplicate, skipping"
+            SKIPPED_DUPLICATE+=("$DATE | $TITLE (\$$AMOUNT)")
+            ((DUPLICATE_COUNT++)) || true
+            continue
+        fi
 
         echo -n "  [$DATE] $TITLE ($TYPE, \$$AMOUNT) ... "
 
@@ -220,12 +250,40 @@ while IFS= read -r recurrence; do
 
 done < <(echo "$RECURRENCES" | jq -c '.data[]')
 
+# ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Done."
+echo ""
 [[ "$DRY_RUN" == true ]] && echo "  Would create : $CREATED_COUNT transaction(s)" || echo "  Created      : $CREATED_COUNT transaction(s)"
-echo "  Skipped      : $SKIPPED_COUNT recurrence(s)"
-echo "  Failed       : $FAILED_COUNT transaction(s)"
+echo "  Duplicates   : $DUPLICATE_COUNT (skipped)"
+echo "  Failed       : $FAILED_COUNT"
+echo ""
+
+if [[ ${#SKIPPED_NO_OCCURRENCE[@]} -gt 0 ]]; then
+    echo "  Not due in $TARGET_MONTH:"
+    for title in "${SKIPPED_NO_OCCURRENCE[@]}"; do
+        echo "    • $title"
+    done
+    echo ""
+fi
+
+if [[ ${#SKIPPED_INACTIVE[@]} -gt 0 ]]; then
+    echo "  Inactive recurrences:"
+    for title in "${SKIPPED_INACTIVE[@]}"; do
+        echo "    • $title"
+    done
+    echo ""
+fi
+
+if [[ ${#SKIPPED_DUPLICATE[@]} -gt 0 ]]; then
+    echo "  Duplicates skipped:"
+    for entry in "${SKIPPED_DUPLICATE[@]}"; do
+        echo "    • $entry"
+    done
+    echo ""
+fi
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if [[ "$FAILED_COUNT" -gt 0 ]]; then
