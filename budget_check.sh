@@ -85,7 +85,7 @@ if [[ -z "$API_KEY" ]]; then
     exit 1
 fi
 
-# ── Helper ────────────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 firefly_get() {
     curl -sf \
         -H "Authorization: Bearer $API_KEY" \
@@ -93,44 +93,42 @@ firefly_get() {
         "${FIREFLY_URL}$1"
 }
 
+round2() { printf "%.2f" "$1"; }
+
 # ── Fetch data ────────────────────────────────────────────────────────────────
 echo "  Fetching checking balance as of $PREV_MONTH_END..."
 CHECKING_DATA=$(firefly_get "/api/v1/accounts/${CHECKING_ACCOUNT_ID}?date=${PREV_MONTH_END}")
-CHECKING_BALANCE=$(echo "$CHECKING_DATA" | jq -r '.data.attributes.current_balance | tonumber')
+CHECKING_BALANCE=$(round2 "$(echo "$CHECKING_DATA" | jq -r '.data.attributes.current_balance | tonumber')")
 
 echo "  Fetching income into checking for $TARGET_MONTH..."
 INCOME_DATA=$(firefly_get "/api/v1/accounts/${CHECKING_ACCOUNT_ID}/transactions?start=${MONTH_START}&end=${MONTH_END}&limit=500&type=deposit")
-INCOME_TOTAL=$(echo "$INCOME_DATA" | jq '[.data[].attributes.transactions[] | select(.destination_id == "'$CHECKING_ACCOUNT_ID'") | .amount | tonumber] | add // 0')
+INCOME_TOTAL=$(round2 "$(echo "$INCOME_DATA" | jq '[.data[].attributes.transactions[] | select(.destination_id == "'$CHECKING_ACCOUNT_ID'") | .amount | tonumber] | add // 0')")
 
 echo "  Fetching budget limits for $TARGET_MONTH..."
-# Fetch budget names first for lookup
 BUDGETS_DATA=$(firefly_get "/api/v1/budgets?limit=100")
-# Build a jq-friendly map of id -> name
 BUDGET_ID_NAME_MAP=$(echo "$BUDGETS_DATA" | jq -c '[.data[] | {id: .id, name: .attributes.name}]')
 
-# Fetch budget limits
 BUDGET_LIMITS_DATA=$(firefly_get "/api/v1/budget-limits?start=${MONTH_START}&end=${MONTH_END}&limit=100")
-BUDGET_TOTAL=$(echo "$BUDGET_LIMITS_DATA" | jq '[.data[].attributes.amount | tonumber] | add // 0')
+BUDGET_TOTAL=$(round2 "$(echo "$BUDGET_LIMITS_DATA" | jq '[.data[].attributes.amount | tonumber] | add // 0')")
 
-# Build display lines: look up name from budget_id
 BUDGET_DETAILS=$(echo "$BUDGET_LIMITS_DATA" | jq -r \
     --argjson names "$BUDGET_ID_NAME_MAP" \
-    '.data[] | .attributes.budget_id as $bid | .attributes.amount as $amt |
+    '.data[] | .attributes.budget_id as $bid | (.attributes.amount | tonumber) as $amt |
      ($names[] | select(.id == $bid) | .name) as $name |
      "\($name)|\($amt)"')
 
 echo "  Fetching transfers out of checking for $TARGET_MONTH..."
 TRANSFER_DATA=$(firefly_get "/api/v1/accounts/${CHECKING_ACCOUNT_ID}/transactions?start=${MONTH_START}&end=${MONTH_END}&limit=500&type=transfer")
-TRANSFER_TOTAL=$(echo "$TRANSFER_DATA" | jq '[.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | .amount | tonumber] | add // 0')
-TRANSFER_DETAILS=$(echo "$TRANSFER_DATA" | jq -r '.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | "\(.description)|\(.amount)"')
+TRANSFER_TOTAL=$(round2 "$(echo "$TRANSFER_DATA" | jq '[.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | .amount | tonumber] | add // 0')")
+TRANSFER_DETAILS=$(echo "$TRANSFER_DATA" | jq -r '.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | "\(.description)|\(.amount | tonumber)"')
 
 echo "  Fetching Checking Account Buffer target..."
 BUFFER_DATA=$(firefly_get "/api/v1/piggy-banks/${BUFFER_PIGGY_BANK_ID}")
-BUFFER_TARGET=$(echo "$BUFFER_DATA" | jq -r '.data.attributes.target_amount | tonumber')
+BUFFER_TARGET=$(round2 "$(echo "$BUFFER_DATA" | jq -r '.data.attributes.target_amount | tonumber')")
 
 # ── Math ──────────────────────────────────────────────────────────────────────
-SUBTOTAL=$(echo "$CHECKING_BALANCE + $INCOME_TOTAL" | bc)
-LEFTOVER=$(echo "$SUBTOTAL - $BUDGET_TOTAL - $TRANSFER_TOTAL - $BUFFER_TARGET" | bc)
+SUBTOTAL=$(round2 "$(echo "$CHECKING_BALANCE + $INCOME_TOTAL" | bc)")
+LEFTOVER=$(round2 "$(echo "$SUBTOTAL - $BUDGET_TOTAL - $TRANSFER_TOTAL - $BUFFER_TARGET" | bc)")
 
 # ── Output ────────────────────────────────────────────────────────────────────
 echo ""
@@ -146,7 +144,7 @@ echo ""
 echo "  Budget limits:"
 while IFS='|' read -r name amount; do
     [[ -z "$name" ]] && continue
-    printf "    %-36s -\$%s\n" "$name" "$amount"
+    printf "    %-36s -\$%s\n" "$name" "$(round2 "$amount")"
 done <<< "$BUDGET_DETAILS"
 printf "  %-38s -\$%s\n" "Total budget limits:" "$BUDGET_TOTAL"
 echo ""
@@ -157,7 +155,7 @@ if [[ -z "$TRANSFER_DETAILS" ]]; then
 else
     while IFS='|' read -r desc amount; do
         [[ -z "$desc" ]] && continue
-        printf "    %-36s -\$%s\n" "$desc" "$amount"
+        printf "    %-36s -\$%s\n" "$desc" "$(round2 "$amount")"
     done <<< "$TRANSFER_DETAILS"
 fi
 printf "  %-38s -\$%s\n" "Total transfers:" "$TRANSFER_TOTAL"
