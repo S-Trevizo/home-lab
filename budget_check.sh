@@ -13,9 +13,6 @@
 # Usage:
 #   ./budget_check.sh              # current month
 #   ./budget_check.sh 2026-04      # specific month (YYYY-MM)
-#
-# Infisical config overrides (optional env vars):
-#   AUTH_FILE, INFISICAL_API_URL, PROJECT_ID, INFISICAL_ENV, FIREFLY_URL
 
 set -euo pipefail
 
@@ -102,57 +99,71 @@ CHECKING_DATA=$(firefly_get "/api/v1/accounts/${CHECKING_ACCOUNT_ID}?date=${PREV
 CHECKING_BALANCE=$(echo "$CHECKING_DATA" | jq -r '.data.attributes.current_balance | tonumber')
 
 echo "  Fetching income into checking for $TARGET_MONTH..."
-# Fetch deposits (type=deposit) into checking account for the month
 INCOME_DATA=$(firefly_get "/api/v1/accounts/${CHECKING_ACCOUNT_ID}/transactions?start=${MONTH_START}&end=${MONTH_END}&limit=500&type=deposit")
 INCOME_TOTAL=$(echo "$INCOME_DATA" | jq '[.data[].attributes.transactions[] | select(.destination_id == "'$CHECKING_ACCOUNT_ID'") | .amount | tonumber] | add // 0')
 
-echo "  Fetching active budget limits..."
+echo "  Fetching budget limits for $TARGET_MONTH..."
+# Fetch budget names first for lookup
 BUDGETS_DATA=$(firefly_get "/api/v1/budgets?limit=100")
-# Sum all budget limits for the target month
+# Build a jq-friendly map of id -> name
+BUDGET_ID_NAME_MAP=$(echo "$BUDGETS_DATA" | jq -c '[.data[] | {id: .id, name: .attributes.name}]')
+
+# Fetch budget limits
 BUDGET_LIMITS_DATA=$(firefly_get "/api/v1/budget-limits?start=${MONTH_START}&end=${MONTH_END}&limit=100")
 BUDGET_TOTAL=$(echo "$BUDGET_LIMITS_DATA" | jq '[.data[].attributes.amount | tonumber] | add // 0')
 
-# Also get budget names for display
-BUDGET_DETAILS=$(echo "$BUDGET_LIMITS_DATA" | jq -r '.data[] | "\(.attributes.budget_name)|\(.attributes.amount)"')
+# Build display lines: look up name from budget_id
+BUDGET_DETAILS=$(echo "$BUDGET_LIMITS_DATA" | jq -r \
+    --argjson names "$BUDGET_ID_NAME_MAP" \
+    '.data[] | .attributes.budget_id as $bid | .attributes.amount as $amt |
+     ($names[] | select(.id == $bid) | .name) as $name |
+     "\($name)|\($amt)"')
 
 echo "  Fetching transfers out of checking for $TARGET_MONTH..."
 TRANSFER_DATA=$(firefly_get "/api/v1/accounts/${CHECKING_ACCOUNT_ID}/transactions?start=${MONTH_START}&end=${MONTH_END}&limit=500&type=transfer")
-TRANSFER_TOTAL=$(echo "$TRANSFER_DATA" | jq '[.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'") | .amount | tonumber] | add // 0')
-TRANSFER_DETAILS=$(echo "$TRANSFER_DATA" | jq -r '.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'") | "\(.description)|\(.amount)"')
+TRANSFER_TOTAL=$(echo "$TRANSFER_DATA" | jq '[.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | .amount | tonumber] | add // 0')
+TRANSFER_DETAILS=$(echo "$TRANSFER_DATA" | jq -r '.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | "\(.description)|\(.amount)"')
 
 echo "  Fetching Checking Account Buffer target..."
 BUFFER_DATA=$(firefly_get "/api/v1/piggy-banks/${BUFFER_PIGGY_BANK_ID}")
 BUFFER_TARGET=$(echo "$BUFFER_DATA" | jq -r '.data.attributes.target_amount | tonumber')
 
 # ── Math ──────────────────────────────────────────────────────────────────────
-LEFTOVER=$(echo "$CHECKING_BALANCE + $INCOME_TOTAL - $BUDGET_TOTAL - $TRANSFER_TOTAL - $BUFFER_TARGET" | bc)
+SUBTOTAL=$(echo "$CHECKING_BALANCE + $INCOME_TOTAL" | bc)
+LEFTOVER=$(echo "$SUBTOTAL - $BUDGET_TOTAL - $TRANSFER_TOTAL - $BUFFER_TARGET" | bc)
 
 # ── Output ────────────────────────────────────────────────────────────────────
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Budget Check — $TARGET_MONTH"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-printf "  %-38s %s\n" "Checking balance ($PREV_MONTH_END):" "\$$CHECKING_BALANCE"
-printf "  %-38s %s\n" "Income into checking:" "+\$$INCOME_TOTAL"
+printf "  %-38s \$%s\n" "Checking balance ($PREV_MONTH_END):" "$CHECKING_BALANCE"
+printf "  %-38s +\$%s\n" "Income into checking:" "$INCOME_TOTAL"
 echo "  ──────────────────────────────────────"
-printf "  %-38s %s\n" "Subtotal:" "\$$(echo "$CHECKING_BALANCE + $INCOME_TOTAL" | bc)"
+printf "  %-38s \$%s\n" "Subtotal:" "$SUBTOTAL"
 echo ""
 
 echo "  Budget limits:"
 while IFS='|' read -r name amount; do
-    printf "    %-36s %s\n" "$name" "-\$$amount"
+    [[ -z "$name" ]] && continue
+    printf "    %-36s -\$%s\n" "$name" "$amount"
 done <<< "$BUDGET_DETAILS"
-printf "  %-38s %s\n" "  Total budget limits:" "-\$$BUDGET_TOTAL"
+printf "  %-38s -\$%s\n" "Total budget limits:" "$BUDGET_TOTAL"
 echo ""
 
 echo "  Transfers out of checking:"
-while IFS='|' read -r desc amount; do
-    printf "    %-36s %s\n" "$desc" "-\$$amount"
-done <<< "$TRANSFER_DETAILS"
-printf "  %-38s %s\n" "  Total transfers:" "-\$$TRANSFER_TOTAL"
+if [[ -z "$TRANSFER_DETAILS" ]]; then
+    echo "    (none)"
+else
+    while IFS='|' read -r desc amount; do
+        [[ -z "$desc" ]] && continue
+        printf "    %-36s -\$%s\n" "$desc" "$amount"
+    done <<< "$TRANSFER_DETAILS"
+fi
+printf "  %-38s -\$%s\n" "Total transfers:" "$TRANSFER_TOTAL"
 echo ""
 
-printf "  %-38s %s\n" "Checking Account Buffer:" "-\$$BUFFER_TARGET"
+printf "  %-38s -\$%s\n" "Checking Account Buffer:" "$BUFFER_TARGET"
 echo ""
 echo "  ──────────────────────────────────────"
 
