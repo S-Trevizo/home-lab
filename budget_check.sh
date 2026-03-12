@@ -109,11 +109,11 @@ BUDGETS_DATA=$(firefly_get "/api/v1/budgets?limit=100")
 BUDGET_ID_NAME_MAP=$(echo "$BUDGETS_DATA" | jq -c '[.data[] | {id: .id, name: .attributes.name}]')
 
 BUDGET_LIMITS_DATA=$(firefly_get "/api/v1/budget-limits?start=${MONTH_START}&end=${MONTH_END}&limit=100")
-BUDGET_TOTAL=$(round2 "$(echo "$BUDGET_LIMITS_DATA" | jq '[.data[].attributes.amount | tonumber] | add // 0')")
+BUDGET_TOTAL=$(round2 "$(echo "$BUDGET_LIMITS_DATA" | jq '[.data[] | select(.attributes.budget_id != "2") | .attributes.amount | tonumber] | add // 0')")
 
 BUDGET_DETAILS=$(echo "$BUDGET_LIMITS_DATA" | jq -r \
     --argjson names "$BUDGET_ID_NAME_MAP" \
-    '.data[] | .attributes.budget_id as $bid | (.attributes.amount | tonumber) as $amt |
+    '.data[] | select(.attributes.budget_id != "2") | .attributes.budget_id as $bid | (.attributes.amount | tonumber) as $amt |
      ($names[] | select(.id == $bid) | .name) as $name |
      "\($name)|\($amt)"')
 
