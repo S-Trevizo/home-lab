@@ -4,7 +4,7 @@ set -e
 DOCKER_DIR="/docker"
 VALID_STACKS="infisical npm cloudflare servarr plex firefly foundry observability watchtower healthcheck"
 
-git -C "$DOCKER_DIR" pull
+sudo -u xeon git -C "$DOCKER_DIR" pull
 
 # Guard against missing HEAD~1 (first commit, shallow clone, etc.)
 if ! git -C "$DOCKER_DIR" rev-parse HEAD~1 &>/dev/null; then
