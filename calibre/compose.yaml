@@ -20,7 +20,7 @@ services:
       - calibre_default
 
   calibre-web:
-    image: lscr.io/linuxserver/readarr:nightly
+    image: lscr.io/linuxserver/calibre-web:latest
     container_name: calibre-web
     environment:
       - PUID=${PUID}

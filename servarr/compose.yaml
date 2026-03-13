@@ -181,7 +181,7 @@ services:
         ipv4_address: 172.39.0.6
 
   readarr:
-    image: lscr.io/linuxserver/readarr:develop
+    image: lscr.io/linuxserver/readarr:nightly
     container_name: readarr
     environment:
       - PUID=${PUID}
