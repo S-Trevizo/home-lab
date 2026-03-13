@@ -10,7 +10,6 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - CALIBRE_USE_CONTENT_SERVER=true
     volumes:
       - ./calibre:/config
       - /home/xeon/data/books:/books
@@ -33,7 +32,7 @@ services:
       - ./calibre-web:/config
       - /home/xeon/data/books:/books
     ports:
-      - 8082:8083    # calibre content server
+      - 8082:8083
     restart: unless-stopped
     depends_on:
       - calibre
