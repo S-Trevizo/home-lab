@@ -123,12 +123,13 @@ TRANSFER_TOTAL=$(round2 "$(echo "$TRANSFER_DATA" | jq '[.data[].attributes.trans
 TRANSFER_DETAILS=$(echo "$TRANSFER_DATA" | jq -r '.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | "\(.description)|\(.amount | tonumber)"')
 
 echo "  Fetching Checking Account Buffer target..."
-BUFFER_DATA=$(firefly_get "/api/v1/piggy-banks/${BUFFER_PIGGY_BANK_ID}")
-BUFFER_TARGET=$(round2 "$(echo "$BUFFER_DATA" | jq -r '.data.attributes.target_amount | tonumber')")
+PBANK_DATA=$(firefly_get "/api/v1/piggy-banks")
+PBANK_TOTAL=$(round2 "$(echo "$PBANK_DATA" | jq '[.data[].attributes | select(any(.accounts[]; .name == "Discover Checking")) | .target_amount | tonumber] | add // 0')")
+PBANK_DETAILS=$(echo "$PBANK_DATA" | jq -r '.data[].attributes| select(any(.accounts[]; .name == "Discover Checking")) | "\(.name)|\(.target_amount | tonumber)"')
 
 # ── Math ──────────────────────────────────────────────────────────────────────
 SUBTOTAL=$(round2 "$(echo "$CHECKING_BALANCE + $INCOME_TOTAL" | bc)")
-LEFTOVER=$(round2 "$(echo "$SUBTOTAL - $BUDGET_TOTAL - $TRANSFER_TOTAL - $BUFFER_TARGET" | bc)")
+LEFTOVER=$(round2 "$(echo "$SUBTOTAL - $BUDGET_TOTAL - $TRANSFER_TOTAL - $PBANK_TOTAL" | bc)")
 
 # ── Output ────────────────────────────────────────────────────────────────────
 echo ""
@@ -161,7 +162,16 @@ fi
 printf "  %-38s -\$%s\n" "Total transfers:" "$TRANSFER_TOTAL"
 echo ""
 
-printf "  %-38s -\$%s\n" "Checking Account Buffer:" "$BUFFER_TARGET"
+echo "  Piggy Banks:"
+if [[ -z "$PBANK_DETAILS" ]]; then
+    echo "    (none)"
+else
+    while IFS='|' read -r name target_amount; do
+        [[ -z "$name" ]] && continue
+        printf "    %-36s -\$%s\n" "$name" "$(round2 "$target_amount")"
+    done <<< "$PBANK_DETAILS"
+fi
+printf "  %-38s -\$%s\n" "Total Piggy Banks:" "$PBANK_TOTAL"
 echo ""
 echo "  ──────────────────────────────────────"
 
