@@ -16,6 +16,7 @@ services:
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.2
+      calibre_default: {}
     ports:
       - ${FIREWALL_VPN_INPUT_PORTS}:${FIREWALL_VPN_INPUT_PORTS}
       - 8080:8080 # qbittorrent web interface
@@ -194,5 +195,14 @@ services:
     depends_on:
       gluetun:
         condition: service_healthy
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.
     restart: unless-stopped
     network_mode: service:gluetun
+
+networks:
+  servarrnetwork:
+    external: true
+  calibre_default:
+    external: true
