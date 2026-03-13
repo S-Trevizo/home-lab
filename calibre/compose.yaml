@@ -10,6 +10,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - CALIBRE_USE_CONTENT_SERVER=true
     volumes:
       - ./calibre:/config
       - /home/xeon/data/books:/books
