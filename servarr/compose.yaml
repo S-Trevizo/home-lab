@@ -197,8 +197,5 @@ services:
     depends_on:
       gluetun:
         condition: service_healthy
-    networks:
-      servarrnetwork:
-        ipv4_address: 172.39.0.7
     restart: unless-stopped
     network_mode: service:gluetun
