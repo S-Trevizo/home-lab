@@ -31,7 +31,7 @@ services:
       - ./calibre-web:/config
       - /home/xeon/data/books:/books
     ports:
-      - 8083:8080   # calibre content server
+      - 8082:8083   # calibre content server
       - 8084:8081   # selkies (optional, only if you want the GUI)
     restart: unless-stopped
     depends_on:
