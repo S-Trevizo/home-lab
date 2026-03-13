@@ -14,13 +14,13 @@ services:
       - ./calibre:/config
       - /home/xeon/data/books:/books
     ports:
-      - 8083:8081 # calibre content server (Readarr integration + internal only)
+      - 8083:8080 # calibre content server (Readarr integration + internal only)
     restart: unless-stopped
     networks:
       - calibre_default
 
   calibre-web:
-    image: lscr.io/linuxserver/calibre-web:latest
+    image: lscr.io/linuxserver/readarr:nightly
     container_name: calibre-web
     environment:
       - PUID=${PUID}
