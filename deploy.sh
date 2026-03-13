@@ -2,7 +2,7 @@
 set -e
 
 DOCKER_DIR="/docker"
-VALID_STACKS="infisical npm cloudflare servarr plex firefly foundry observability watchtower healthcheck"
+VALID_STACKS="infisical npm cloudflare servarr calibre plex firefly foundry observability watchtower healthcheck"
 
 sudo -u xeon git -C "$DOCKER_DIR" pull
 
