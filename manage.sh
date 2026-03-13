@@ -19,6 +19,7 @@ STACKS=(
   cloudflare
   servarr
   plex
+  calibre
   firefly
   immich
   nextcloud

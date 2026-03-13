@@ -1,0 +1,39 @@
+networks:
+  calibre_default:
+    name: calibre_default
+
+services:
+  calibre:
+    image: lscr.io/linuxserver/calibre:latest
+    container_name: calibre
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ./calibre:/config
+      - /home/xeon/data/books:/books
+    ports:
+      - 8083:8081 # calibre content server (Readarr integration + internal only)
+    restart: unless-stopped
+    networks:
+      - calibre_default
+
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - DOCKER_MODS=linuxserver/mods:universal-calibre  # enables ebook-convert for format conversion
+    volumes:
+      - ./calibre-web:/config
+      - /home/xeon/data/books:/books
+    ports:
+      - 8082:8083
+    restart: unless-stopped
+    depends_on:
+      - calibre
+    networks:
+      - calibre_default
