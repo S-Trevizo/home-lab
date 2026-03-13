@@ -4,6 +4,8 @@ networks:
     ipam:
       config:
         - subnet: 172.39.0.0/24
+  calibre_default:
+    external: true
 
 services:
   gluetun:
@@ -200,9 +202,3 @@ services:
         ipv4_address: 172.39.0.7
     restart: unless-stopped
     network_mode: service:gluetun
-
-networks:
-  servarrnetwork:
-    external: true
-  calibre_default:
-    external: true
