@@ -183,9 +183,9 @@ services:
       servarrnetwork:
         ipv4_address: 172.39.0.6
 
-  readarr:
+  bookshelf:
     image: ghcr.io/pennydreadful/bookshelf:hardcover
-    container_name: readarr
+    container_name: bookshelf
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -194,6 +194,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./readarr:/config
       - /home/xeon/data:/data
+      - /home/xeon/data/books:/books
     depends_on:
       gluetun:
         condition: service_healthy
