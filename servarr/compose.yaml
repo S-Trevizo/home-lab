@@ -200,3 +200,15 @@ services:
         condition: service_healthy
     restart: unless-stopped
     network_mode: service:gluetun
+
+seedboxapi:
+  image: myanonamouse/seedboxapi
+  user: 1000:1000 # Run as a non-root user.
+  container_name: seedboxapi
+  network_mode: "service:gluetun"
+  volumes:
+    - ./seedboxapi:/config
+  environment:
+    - DEBUG=1
+    - mam_id=__SESSION_ID__
+    - interval=1
