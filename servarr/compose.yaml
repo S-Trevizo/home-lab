@@ -26,6 +26,7 @@ services:
       - 6789:6789 # nzbget
       - 9696:9696 # prowlarr
       - 8787:8787 # readarr
+      - 5010:5010 # mousehole
     volumes:
       - ./gluetun:/gluetun
     env_file: .env
@@ -201,14 +202,18 @@ services:
     restart: unless-stopped
     network_mode: service:gluetun
 
-seedboxapi:
-  image: myanonamouse/seedboxapi
-  user: 1000:1000 # Run as a non-root user.
-  container_name: seedboxapi
-  network_mode: "service:gluetun"
-  volumes:
-    - ./seedboxapi:/config
-  environment:
-    - DEBUG=1
-    - mam_id=__SESSION_ID__
-    - interval=1
+  mousehole:
+    image: tmmrtn/mousehole:latest
+    container_name: mousehole
+    network_mode: service:gluetun
+    environment:
+      - TZ=${TZ} # Set to your timezone for localization
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      # persist cookie data across container restarts
+      - ./mousehole:/srv/mousehole
+    restart: unless-stopped
+    depends_on:
+      gluetun:
+        condition: service_healthy

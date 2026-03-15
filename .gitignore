@@ -46,6 +46,8 @@ servarr/qbittorrent/
 servarr/nzbget/
 servarr/gluetun/
 servarr/.env.save
+servarr/readarr/
+servarr/mousehole/
 # =============================================================================
 # Immich stack
 # =============================================================================
