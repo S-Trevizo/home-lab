@@ -567,8 +567,8 @@ groups:
         condition: B
         for: 5m
         annotations:
-          summary: "Container {{ $labels.name }} is crash looping"
-          description: "Container {{ $labels.name }} has restarted more than 5 times in the last 5 minutes."
+          summary: "A container is crash looping"
+          description: "One or more containers have restarted more than 5 times in the last 5 minutes. Check Grafana cAdvisor dashboard for details."
         labels:
           severity: warning
         data:
@@ -610,8 +610,8 @@ groups:
         condition: B
         for: 5m
         annotations:
-          summary: "Disk usage on {{ $labels.mountpoint }} is above 85%"
-          description: "Disk at {{ $labels.mountpoint }} on servarr is above 85% full."
+          summary: "Disk usage is above 85%"
+          description: "A filesystem on servarr is above 85% full. Check Grafana dashboard for details."
         labels:
           severity: warning
         data:
@@ -764,8 +764,8 @@ groups:
         condition: B
         for: 5m
         annotations:
-          summary: "Disk usage on Proxmox {{ $labels.mountpoint }} is above 85%"
-          description: "Disk at {{ $labels.mountpoint }} on Proxmox host is above 85% full."
+          summary: "Disk usage on Proxmox is above 85%"
+          description: "A filesystem on Proxmox host is above 85% full. Check Grafana dashboard for details."
         labels:
           severity: warning
         data:
