@@ -414,6 +414,154 @@ groups:
                   reducer:
                     type: last
 
+      - uid: container-down-calibre
+        title: "Container Down: calibre"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container calibre is down"
+          description: "Container calibre has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"calibre\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-calibre-web
+        title: "Container Down: calibre-web"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container calibre-web is down"
+          description: "Container calibre-web has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"calibre-web\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-bookshelf
+        title: "Container Down: bookshelf"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container bookshelf is down"
+          description: "Container bookshelf has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"bookshelf\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
+      - uid: container-down-mousehole
+        title: "Container Down: mousehole"
+        condition: B
+        for: 10m
+        annotations:
+          summary: "Container mousehole is down"
+          description: "Container mousehole has been absent for more than 10 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: "absent(container_last_seen{name=\"mousehole\"})"
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+
       - uid: container-crash-loop
         title: "Container Crash Loop"
         condition: B
@@ -430,7 +578,7 @@ groups:
               to: 0
             datasourceUid: PBFA97CFB590B2093
             model:
-              expr: "increase(container_start_time_seconds{name=~\"sonarr|radarr|prowlarr|lidarr|bazarr|plex|tautulli|qbittorrent|nzbget|gluetun|seerr|firefly_iii_core|firefly_iii_db|nextcloud|nextcloud_db|immich_server|loki|prometheus|grafana|healthcheck-api|nginx_proxy_manager|infisical-infisical-1\"}[5m])"
+              expr: "increase(container_start_time_seconds{name=~\"sonarr|radarr|prowlarr|lidarr|bazarr|plex|tautulli|qbittorrent|nzbget|gluetun|seerr|firefly_iii_core|firefly_iii_db|nextcloud|nextcloud_db|immich_server|loki|prometheus|grafana|healthcheck-api|nginx_proxy_manager|infisical-infisical-1|calibre|calibre-web|bookshelf|mousehole\"}[5m])"
               instant: true
               refId: A
           - refId: B
