@@ -179,11 +179,12 @@ inject_secrets_for() {
       remap WATCHTOWER_NOTIFICATION_URL  WATCHTOWER_NOTIFICATION_URL
       ;;
     healthcheck)
-      remap SONARR_API_KEY    SONARR_API_KEY
-      remap RADARR_API_KEY    RADARR_API_KEY
-      remap PROWLARR_API_KEY  PROWLARR_API_KEY
-      remap LIDARR_API_KEY    LIDARR_API_KEY
-      remap BAZARR_API_KEY    BAZARR_API_KEY
+      remap SONARR_API_KEY     SONARR_API_KEY
+      remap RADARR_API_KEY     RADARR_API_KEY
+      remap PROWLARR_API_KEY   PROWLARR_API_KEY
+      remap LIDARR_API_KEY     LIDARR_API_KEY
+      remap BAZARR_API_KEY     BAZARR_API_KEY
+      remap BOOKSHELF_API_KEY  BOOKSHELF_API_KEY
       ;;
     npm|plex|infisical)
       ;;  # no secrets needed
