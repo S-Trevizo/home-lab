@@ -27,6 +27,7 @@ services:
       - 9696:9696 # prowlarr
       - 8787:8787 # readarr
       - 5010:5010 # mousehole
+      - 8787:8787
     volumes:
       - ./gluetun:/gluetun
     env_file: .env
