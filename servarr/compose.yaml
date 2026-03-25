@@ -56,6 +56,10 @@ services:
     volumes:
       - ./qbittorrent:/config
       - /home/xeon/data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 6g
     depends_on:
       gluetun:
         condition: service_healthy
