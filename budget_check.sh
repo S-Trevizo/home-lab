@@ -5,6 +5,7 @@
 # Formula:
 #   Checking balance (end of prev month)
 #   + Income into checking (target month)
+#   + Transfers into checking (target month)
 #   - Sum of all active budget limits
 #   - Sum of transfers out of checking (target month)
 #   - Checking Account Buffer piggy bank target
@@ -117,10 +118,12 @@ BUDGET_DETAILS=$(echo "$BUDGET_LIMITS_DATA" | jq -r \
      ($names[] | select(.id == $bid) | .name) as $name |
      "\($name)|\($amt)"')
 
-echo "  Fetching transfers out of checking for $TARGET_MONTH..."
+echo "  Fetching transfers into/out of checking for $TARGET_MONTH..."
 TRANSFER_DATA=$(firefly_get "/api/v1/accounts/${CHECKING_ACCOUNT_ID}/transactions?start=${MONTH_START}&end=${MONTH_END}&limit=500&type=transfer")
-TRANSFER_TOTAL=$(round2 "$(echo "$TRANSFER_DATA" | jq '[.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | .amount | tonumber] | add // 0')")
-TRANSFER_DETAILS=$(echo "$TRANSFER_DATA" | jq -r '.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | "\(.description)|\(.amount | tonumber)"')
+TRANSFER_OUT_TOTAL=$(round2 "$(echo "$TRANSFER_DATA" | jq '[.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | .amount | tonumber] | add // 0')")
+TRANSFER_OUT_DETAILS=$(echo "$TRANSFER_DATA" | jq -r '.data[].attributes.transactions[] | select(.source_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | "\(.description)|\(.amount | tonumber)"')
+TRANSFER_IN_TOTAL=$(round2 "$(echo "$TRANSFER_DATA" | jq '[.data[].attributes.transactions[] | select(.destination_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | .amount | tonumber] | add // 0')")
+TRANSFER_IN_DETAILS=$(echo "$TRANSFER_DATA" | jq -r '.data[].attributes.transactions[] | select(.destination_id == "'$CHECKING_ACCOUNT_ID'" and .type == "transfer") | "\(.description)|\(.amount | tonumber)"')
 
 echo "  Fetching Checking Account Buffer target..."
 PBANK_DATA=$(firefly_get "/api/v1/piggy-banks")
@@ -128,8 +131,8 @@ PBANK_TOTAL=$(round2 "$(echo "$PBANK_DATA" | jq '[.data[].attributes | select(an
 PBANK_DETAILS=$(echo "$PBANK_DATA" | jq -r '.data[].attributes| select(any(.accounts[]; .name == "Discover Checking")) | "\(.name)|\(.target_amount | tonumber)"')
 
 # ── Math ──────────────────────────────────────────────────────────────────────
-SUBTOTAL=$(round2 "$(echo "$CHECKING_BALANCE + $INCOME_TOTAL" | bc)")
-LEFTOVER=$(round2 "$(echo "$SUBTOTAL - $BUDGET_TOTAL - $TRANSFER_TOTAL - $PBANK_TOTAL" | bc)")
+SUBTOTAL=$(round2 "$(echo "$CHECKING_BALANCE + $INCOME_TOTAL + $TRANSFER_IN_TOTAL" | bc)")
+LEFTOVER=$(round2 "$(echo "$SUBTOTAL - $BUDGET_TOTAL - $TRANSFER_OUT_TOTAL - $PBANK_TOTAL" | bc)")
 
 # ── Output ────────────────────────────────────────────────────────────────────
 echo ""
@@ -138,6 +141,7 @@ echo "  Budget Check — $TARGET_MONTH"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 printf "  %-38s \$%s\n" "Checking balance ($PREV_MONTH_END):" "$CHECKING_BALANCE"
 printf "  %-38s +\$%s\n" "Income into checking:" "$INCOME_TOTAL"
+printf "  %-38s +\$%s\n" "Transfers into checking:" "$TRANSFER_IN_TOTAL"
 echo "  ──────────────────────────────────────"
 printf "  %-38s \$%s\n" "Subtotal:" "$SUBTOTAL"
 echo ""
@@ -151,15 +155,27 @@ printf "  %-38s -\$%s\n" "Total budget limits:" "$BUDGET_TOTAL"
 echo ""
 
 echo "  Transfers out of checking:"
-if [[ -z "$TRANSFER_DETAILS" ]]; then
+if [[ -z "$TRANSFER_OUT_DETAILS" ]]; then
     echo "    (none)"
 else
     while IFS='|' read -r desc amount; do
         [[ -z "$desc" ]] && continue
         printf "    %-36s -\$%s\n" "$desc" "$(round2 "$amount")"
-    done <<< "$TRANSFER_DETAILS"
+    done <<< "$TRANSFER_OUT_DETAILS"
 fi
-printf "  %-38s -\$%s\n" "Total transfers:" "$TRANSFER_TOTAL"
+printf "  %-38s -\$%s\n" "Total transfers out:" "$TRANSFER_OUT_TOTAL"
+echo ""
+
+echo "  Transfers into checking:"
+if [[ -z "$TRANSFER_IN_DETAILS" ]]; then
+    echo "    (none)"
+else
+    while IFS='|' read -r desc amount; do
+        [[ -z "$desc" ]] && continue
+        printf "    %-36s +\$%s\n" "$desc" "$(round2 "$amount")"
+    done <<< "$TRANSFER_IN_DETAILS"
+fi
+printf "  %-38s +\$%s\n" "Total transfers in:" "$TRANSFER_IN_TOTAL"
 echo ""
 
 echo "  Piggy Banks:"
