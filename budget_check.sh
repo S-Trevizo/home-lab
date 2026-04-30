@@ -103,8 +103,7 @@ CHECKING_BALANCE=$(round2 "$(echo "$CHECKING_DATA" | jq -r '.data.attributes.cur
 
 echo "  Fetching income into checking for $TARGET_MONTH..."
 INCOME_DATA=$(firefly_get "/api/v1/accounts/${CHECKING_ACCOUNT_ID}/transactions?start=${MONTH_START}&end=${MONTH_END}&limit=500&type=deposit")
-INCOME_TOTAL=$(round2 "$(echo "$INCOME_DATA" | jq '[.data[].attributes.transactions[] | select(.destination_id == "'$CHECKING_ACCOUNT_ID'") | .amount | tonumber] | add // 0')")
-
+INCOME_TOTAL=$(round2 "$(echo "$INCOME_DATA" | jq '[.data[].attributes.transactions[] | select(.destination_id == "'$CHECKING_ACCOUNT_ID'" and .type == "deposit") | .amount | tonumber] | add // 0')")
 echo "  Fetching budget limits for $TARGET_MONTH..."
 BUDGETS_DATA=$(firefly_get "/api/v1/budgets?limit=100")
 BUDGET_ID_NAME_MAP=$(echo "$BUDGETS_DATA" | jq -c '[.data[] | {id: .id, name: .attributes.name}]')
