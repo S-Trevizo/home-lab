@@ -1,6 +1,6 @@
 services:
   foundry:
-    image: felddy/foundryvtt:release
+    image: felddy/foundryvtt:13
     container_name: foundry
     restart: unless-stopped
     ports:
