@@ -12,7 +12,10 @@ services:
       - ./letsencrypt:/etc/letsencrypt
     networks:
       - foundry_default
+      - firefly_iii
 
 networks:
   foundry_default:
+    external: true
+  firefly_iii:
     external: true
