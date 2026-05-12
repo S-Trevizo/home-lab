@@ -145,6 +145,8 @@ inject_secrets_for() {
       remap WIREGUARD_PRIVATE_KEY     WIREGUARD_PRIVATE_KEY
       remap WIREGUARD_PRESHARED_KEY   WIREGUARD_PRESHARED_KEY
       remap WIREGUARD_ADDRESSES       WIREGUARD_ADDRESSES
+      remap RREADING_DB_PASSWORD   RREADING_DB_PASSWORD
+      remap HARDCOVER_API_TOKEN    HARDCOVER_API_TOKEN
       ;;
     firefly)
       remap FIREFLY_APP_KEY       APP_KEY
@@ -185,11 +187,6 @@ inject_secrets_for() {
       remap LIDARR_API_KEY     LIDARR_API_KEY
       remap BAZARR_API_KEY     BAZARR_API_KEY
       remap BOOKSHELF_API_KEY  BOOKSHELF_API_KEY
-      ;;
-    bookshelf)
-      remap BOOKSHELF_API_KEY      BOOKSHELF_API_KEY
-      remap RREADING_DB_PASSWORD   RREADING_DB_PASSWORD
-      remap HARDCOVER_API_TOKEN    HARDCOVER_API_TOKEN
       ;;
     npm|plex|infisical)
       ;;  # no secrets needed
