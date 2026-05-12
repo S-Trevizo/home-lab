@@ -186,6 +186,11 @@ inject_secrets_for() {
       remap BAZARR_API_KEY     BAZARR_API_KEY
       remap BOOKSHELF_API_KEY  BOOKSHELF_API_KEY
       ;;
+    bookshelf)
+      remap BOOKSHELF_API_KEY      BOOKSHELF_API_KEY
+      remap RREADING_DB_PASSWORD   RREADING_DB_PASSWORD
+      remap HARDCOVER_API_TOKEN    HARDCOVER_API_TOKEN
+      ;;
     npm|plex|infisical)
       ;;  # no secrets needed
   esac

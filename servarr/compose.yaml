@@ -206,6 +206,39 @@ services:
     restart: unless-stopped
     network_mode: service:gluetun
 
+rreading-glasses:
+    image: blampe/rreading-glasses:hardcover
+    container_name: rreading_glasses
+    restart: unless-stopped
+    mem_limit: 512m
+    networks:
+      - servarrnetwork
+    ports:
+      - 8788:8788
+    command: >
+      serve
+      --postgres-host=rreading_glasses_db
+      --postgres-user=rreading
+      --postgres-password=${RREADING_DB_PASSWORD}
+      --postgres-database=rreading-glasses
+      --hardcover-auth=Bearer ${HARDCOVER_API_TOKEN}
+      --port=8788
+    depends_on:
+      - rreading-glasses-db
+
+  rreading-glasses-db:
+    image: postgres:17
+    container_name: rreading_glasses_db
+    restart: unless-stopped
+    networks:
+      - servarrnetwork
+    volumes:
+      - ./rreading-glasses/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: rreading
+      POSTGRES_PASSWORD: ${RREADING_DB_PASSWORD}
+      POSTGRES_DB: rreading-glasses
+
   mousehole:
     image: tmmrtn/mousehole:latest
     container_name: mousehole
