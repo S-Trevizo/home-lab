@@ -206,7 +206,7 @@ services:
     restart: unless-stopped
     network_mode: service:gluetun
 
-rreading-glasses:
+  rreading-glasses:
     image: blampe/rreading-glasses:hardcover
     container_name: rreading_glasses
     restart: unless-stopped
