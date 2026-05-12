@@ -212,7 +212,8 @@ services:
     restart: unless-stopped
     mem_limit: 128m
     networks:
-      - servarrnetwork
+      - servarrnetwork:
+        ipv4_address: 172.39.0.11
     ports:
       - 8788:8788
     entrypoint: ["/main", "serve"]
@@ -232,7 +233,8 @@ services:
     container_name: rreading_glasses_db
     restart: unless-stopped
     networks:
-      - servarrnetwork
+      servarrnetwork:
+        ipv4_address: 172.39.0.10
     volumes:
       - ./rreading-glasses/db:/var/lib/postgresql/data
     environment:
