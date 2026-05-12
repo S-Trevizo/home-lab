@@ -210,18 +210,20 @@ services:
     image: blampe/rreading-glasses:hardcover
     container_name: rreading_glasses
     restart: unless-stopped
-    mem_limit: 512m
+    mem_limit: 128m
     networks:
       - servarrnetwork
     ports:
       - 8788:8788
-    command: >
-      --postgres-host=rreading_glasses_db
-      --postgres-user=rreading
-      --postgres-password=${RREADING_DB_PASSWORD}
-      --postgres-database=rreading-glasses
-      --hardcover-auth=Bearer ${HARDCOVER_API_TOKEN}
-      --port=8788
+    entrypoint: ["/main", "serve"]
+    command:
+      - --verbose
+    environment:
+      HARDCOVER_AUTH: "Bearer ${HARDCOVER_API_TOKEN}"
+      POSTGRES_HOST: rreading_glasses_db
+      POSTGRES_USER: rreading
+      POSTGRES_PASSWORD: ${RREADING_DB_PASSWORD}
+      POSTGRES_DATABASE: rreading-glasses
     depends_on:
       - rreading-glasses-db
 
