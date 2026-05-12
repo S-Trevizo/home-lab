@@ -51,6 +51,10 @@ services:
     container_name: cadvisor
     restart: unless-stopped
     privileged: true
+    command:
+      - --housekeeping_interval=30s
+      - --disable_metrics=disk,diskIO,tcp,udp,percpu,sched,process
+      - --store_container_labels=false
     devices:
       - /dev/kmsg
     volumes:
