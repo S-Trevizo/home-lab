@@ -210,7 +210,7 @@ services:
     image: blampe/rreading-glasses:hardcover
     container_name: rreading_glasses
     restart: unless-stopped
-    mem_limit: 128m
+    mem_limit: 256m
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.11
