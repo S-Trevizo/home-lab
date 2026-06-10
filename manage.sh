@@ -148,6 +148,7 @@ inject_secrets_for() {
       remap RREADING_DB_PASSWORD      RREADING_DB_PASSWORD
       remap HARDCOVER_API_TOKEN       HARDCOVER_API_TOKEN
       remap MOUSEHOLE_AUTH_TOKEN      MOUSEHOLE_AUTH_TOKEN
+      remap MOUSEHOLE_ALLOWED_HOSTS   MOUSEHOLE_ALLOWED_HOSTS
       ;;
     firefly)
       remap FIREFLY_APP_KEY       APP_KEY
