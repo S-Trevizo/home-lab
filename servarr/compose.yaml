@@ -250,6 +250,7 @@ services:
       - TZ=${TZ} # Set to your timezone for localization
       - PUID=${PUID}
       - PGID=${PGID}
+      - MOUSEHOLE_AUTH_TOKEN
     volumes:
       # persist cookie data across container restarts
       - ./mousehole:/srv/mousehole
