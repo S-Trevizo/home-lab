@@ -252,6 +252,7 @@ services:
       - PGID=${PGID}
       - MOUSEHOLE_AUTH_TOKEN
       - MOUSEHOLE_ALLOWED_HOSTS
+      - MOUSEHOLE_AUTH_PASSWORD
     volumes:
       # persist cookie data across container restarts
       - ./mousehole:/srv/mousehole

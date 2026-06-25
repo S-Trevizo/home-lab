@@ -18,7 +18,8 @@ services:
       - ./upload:/var/www/html/storage/upload
     env_file: .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - APP_KEY
       - DB_USERNAME
@@ -31,6 +32,12 @@ services:
     hostname: db
     container_name: firefly_iii_db
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - firefly_iii
     volumes:
