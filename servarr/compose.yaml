@@ -219,6 +219,7 @@ services:
     entrypoint: ["/main", "serve"]
     command:
       - --verbose
+      - --rpm=20
     environment:
       HARDCOVER_AUTH: "Bearer ${HARDCOVER_API_TOKEN}"
       POSTGRES_HOST: rreading_glasses_db
