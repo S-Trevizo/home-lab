@@ -38,3 +38,19 @@ services:
       - calibre
     networks:
       - calibre_default
+
+  kosync:
+    image: koreader/kosync:latest
+    container_name: kosync
+    restart: unless-stopped
+    ports:
+      - 17200:17200
+    volumes:
+      - ./kosync/data/redis:/var/lib/redis
+      - ./kosync/logs/app:/app/koreader-sync-server/logs
+      - ./kosync/logs/redis:/var/log/redis
+    environment:
+      - UID=${PUID}
+      - GID=${PGID}
+    networks:
+      - calibre_default
