@@ -11,6 +11,8 @@ services:
   gluetun:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
     cap_add:
       - NET_ADMIN
     devices:
